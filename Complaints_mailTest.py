@@ -45,27 +45,11 @@ newMssgString2 = df[cols].to_html
 tbl_Out = HTML(df.to_html(classes='table table-striped'))
 print(newMssgString)
 print('\n\n')
-print(df)
+print(df.groupby('RespDept'))
 #######################################################################################################################
 
-today = date.today()
-yesterday = today - timedelta(days = 1)
-messageString = ""
-complaints_today = {}
 
-for i in range(df.shape[0]):
-    if df['OpenDate'].values[i] == yesterday:        
-        if df['ClassDesc'].values[i] in complaints_today:
-            complaints_today[df['ClassDesc'].values[i]] += str(df['SoNum'].values[i]) + " :  " + str(df['RC_Description'].values[i]) + ",\n "
-        else:
-            complaints_today[df['ClassDesc'].values[i]] = str(df['SoNum'].values[i]) + " :  " + str(df['RC_Description'].values[i]) + ",\n "
-
-for key, value in complaints_today.items():
-    messageString += key + "\n" + value + "\n"
-
-
-#messageString = messageString.replace('\n', '<br/>')
-dfPrint = df[['ComplaintNum', 'Status', 'SoNum', 'SOItem', 'ClassDesc', 'PartCost', 'RC_Description', 'CS_Description', 'AffQty', 'RespDept']]
+dfPrint = df[['RespDept', 'ComplaintNum', 'Status', 'SoNum', 'SOItem', 'ClassDesc', 'PartCost', 'RC_Description', 'CS_Description', 'AffQty']]
 ####################################################################################################
 from reportlab.platypus import Paragraph, Spacer, Table, Image, SimpleDocTemplate
 from reportlab.lib.styles import getSampleStyleSheet
@@ -77,6 +61,7 @@ def generate_report(attachment, title, paragraph):
 
     print("--------------------------------")
     print(str(df[['ComplaintNum', 'Status', 'SoNum', 'SOItem', 'ClassDesc', 'PartCost', 'RC_Description', 'CS_Description', 'AffQty', 'RespDept']]))
+    print('\n\n\n\n')
     print(str(dfPrint))
     print("--------------------------------")
 
@@ -101,7 +86,7 @@ if __name__ == "__main__":
     mail = outlook.CreateItem(0)
     mail.To = 'gnetherton@northwestdoor.com'
     mail.Subject = 'Complaint Summary'
-    mail.Body = messageString
+    mail.Body = str(dfPrint)
     #mail.HTMLBody = tbl_Out #this field is optional
 
     # To attach a file to the email (optional):
