@@ -1,0 +1,26 @@
+$code=@"
+using System;
+using System.Data.SqlClient;
+
+namespace Version
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var cs = @"Server=Sql2014;Database=NWDComplaints;Trusted_Connection=True;";
+            var stm = "SELECT @@VERSION";
+
+            using var con = new SqlConnection(cs);
+            con.Open();
+
+            using var cmd = new SqlCommand(stm, con);
+            string version = cmd.ExecuteScalar().ToString();
+
+            Console.WriteLine(version);
+        }
+    }
+}
+"@
+Add-Type -TypeDefinition $code -Language CSharp
+iex["Version.Program"]::Main()"
