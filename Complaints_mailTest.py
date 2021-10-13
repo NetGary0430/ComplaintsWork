@@ -27,6 +27,7 @@ query = '''SELECT CD.[ComplaintNum],CD.[Status],CD.[SoNum]
       ,CD.[Description],CD.[Expr9] As PartCost
       ,CD.[Qty],CD.[RC_Description]
       ,CD.[CS_Description],CD.[AffQty]
+      ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
 	  ,M.[RespDept] As Dept
   FROM [NwdComplaints].[dbo].[vComplaintDetails] AS CD
   JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
@@ -47,7 +48,7 @@ tbl_Out = HTML(df.to_html(classes='table table-striped'))
 #######################################################################################################################
 
 
-dfPrint = df[['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'CS_Description', 'AffQty']]
+dfPrint = df[['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'AffQty', 'ComplaintCost']]
 dfPrint.sort_values(by=['Dept'], inplace=True)
 
 """ ####################################################################################################
