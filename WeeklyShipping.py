@@ -61,10 +61,10 @@ if __name__ == "__main__":
     mail = outlook.CreateItem(0)
     # mail.To = 'gnetherton@northwestdoor.com; mmartin@northwestdoor.com; sjones@northwestdoor.com; jfrench@northwestdoor.com; choffman@northwestdoor.com; wbaer@northwestdoor.com'
     mail.To = 'gnetherton@northwestdoor.com; choffman@northwestdoor.com'
-    mail.Subject = 'Complaint Summary '+ datetime.datetime.now().strftime("%B %d, %Y")
+    mail.Subject = 'Shipping Complaint Summary '+ datetime.datetime.now().strftime("%B %d, %Y")
     mail.Body = '''Please find data attached and below.\n\n
                {}'''.format(dfPrint.to_string())
-    mail.HTMLBody = '''<h3>Please find yesterday's data below.</h3> {}'''.format(dfPrint.to_html())
+    mail.HTMLBody = '''<h3>Please find yesterday's shipping complaint data below.</h3> {}'''.format(dfPrint.to_html())
 
     # To attach a file to the email (optional):
     #attachment  = "C:/temp/complaintsdept.pdf"
