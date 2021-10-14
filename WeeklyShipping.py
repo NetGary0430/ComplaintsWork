@@ -48,7 +48,7 @@ tbl_Out = HTML(df.to_html(classes='table table-striped'))
 #######################################################################################################################
 
 
-dfPrint = df[['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'AffQty', 'ComplaintCost']]
+dfPrint = df.loc[:, ['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'AffQty', 'ComplaintCost']]
 dfPrint.sort_values(by=['Dept'], inplace=True)
 
 ####################################################################################################
