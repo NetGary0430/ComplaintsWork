@@ -87,6 +87,7 @@ if __name__ == "__main__":
     outlook = win32.Dispatch('outlook.application')
     mail = outlook.CreateItem(0)
     mail.To = 'gnetherton@northwestdoor.com; mmartin@northwestdoor.com; sjones@northwestdoor.com; jfrench@northwestdoor.com; choffman@northwestdoor.com; wbaer@northwestdoor.com'
+    mail.CC = 'ahipps@northwestdoor.com; dharris@northwestdoor.com; lantonio@northwestdoor.com; chowell@northwestdoor.com; mwillis@northwestdoor.com'
     mail.Subject = 'Complaint Summary '+ datetime.datetime.now().strftime("%B %d, %Y")
     mail.Body = '''Please find data attached and below.\n\n
                {}'''.format(dfPrint.to_string())

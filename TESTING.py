@@ -24,7 +24,7 @@ query = '''SELECT CD.[ComplaintNum],CD.[Status],CD.[SoNum]
       ,CD.[Description],CD.[Expr9] As PartCost
       ,CD.[Qty],CD.[RC_Description]
       ,CD.[CS_Description],CD.[AffQty]
-      ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
+      ,CAST(CD.[AffQty]*CD.[Expr9] AS DECIMAL(10,2)) AS ComplaintCost
 	  ,M.[RespDept] As Dept
   FROM [NwdComplaints].[dbo].[vComplaintDetails] AS CD
   JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
