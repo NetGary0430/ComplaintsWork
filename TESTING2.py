@@ -9,7 +9,7 @@ import datetime
 import calendar
 from datetime import date
 from datetime import timedelta
-# from datetime import datetime
+from datetime import datetime
 from pathlib import Path
 from tabulate import tabulate
 from IPython.display import HTML
@@ -78,29 +78,17 @@ else:
   query = query3
 
 df1 = pd.read_sql(query, cnxn1)
-# print(df1.to_string())
+print(df1.to_string())
 cursor1.close()
 cnxn1.close()
 
 ## Using df.loc to avoid the "SettingWithCopyWarning" in Pandas.  Had been using dfPrint=df[[x,y,z... names of columns]]
 dfPrint = df1.loc[:, ['ComplaintNum', 'SoNum', 'SOItem', 'OpenDate', 'Product', 'RC_Description', 'ComplaintCost', 'RespDept']]
+
+
 ####################################################################################################
 ####################################################################################################
 
 if __name__ == "__main__":
-    #qcReport = generate_report('C:/temp/complaintsdept.pdf', "Complaints Report generated " + datetime.datetime.now().strftime("%B %d, %Y"), str(dfPrint))
-    #qcReport = generate_report('C:/temp/complaintsdept.pdf', "Complaints Report generated " + datetime.datetime.now().strftime("%B %d, %Y"), (dfPrint.to_string()))
-    outlook = win32.Dispatch('outlook.application')
-    mail = outlook.CreateItem(0)
-    mail.To = 'gnetherton@northwestdoor.com; mmartin@northwestdoor.com; sjones@northwestdoor.com; jfrench@northwestdoor.com; choffman@northwestdoor.com; wbaer@northwestdoor.com'
-    mail.CC = 'ahipps@northwestdoor.com; dharris@northwestdoor.com; lantonio@northwestdoor.com; chowell@northwestdoor.com; mwillis@northwestdoor.com'
-    mail.Subject = 'Complaint Summary '+ datetime.datetime.now().strftime("%B %d, %Y")
-    mail.Body = '''Please find data attached and below.\n\n
-               {}'''.format(dfPrint.to_string())
-    mail.HTMLBody = '''<h3>Please find yesterday's data below.</h3> {}'''.format(dfPrint.to_html())
-
-    # To attach a file to the email (optional):
-    #attachment  = "C:/temp/complaintsdept.pdf"
-   # mail.Attachments.Add(attachment)
-
-    mail.Send()
+    
+    print(df1)

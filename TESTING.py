@@ -19,25 +19,62 @@ import pyodbc
 cnxn = pyodbc.connect('''Driver={ODBC Driver 17 for SQL Server}; Server=SQL2014; Database=NWDComplaints; Trusted_Connection=yes;''')
 cursor = cnxn.cursor()
 
-query = '''SELECT CD.[ComplaintNum],CD.[Status],CD.[SoNum]
-      ,CD.[SOItem],CD.[OpenDate],CD.[Product]
+query = '''
+BEGIN
+  DECLARE @dayCount INT;
+  DECLARE @wkDay VARCHAR(10);
+
+  SELECT @wkDay = DATENAME(weekday, GETDATE() )
+
+  -- Based on today's day of the week, set the offset for the query 
+  SELECT @wkDay;
+  IF @wkDay IN ('Tuesday', 'Wednesday', 'Thursday', 'Friday')
+    BEGIN
+	  SET @dayCount = 1;
+	END
+	ELSE
+	BEGIN
+	  SET @dayCount = 3;
+	END
+END;'''
+
+df = pd.read_sql(query, cnxn)
+print(df)
+dayCount = df.to_string()
+
+cnxn1 = pyodbc.connect('''Driver={ODBC Driver 17 for SQL Server}; Server=SQL2014; Database=NWDComplaints; Trusted_Connection=yes;''')
+cursor1 = cnxn.cursor()
+
+query1 = '''
+WITH Complaints_CTE (DayOfWeek, ComplaintNum, Status, SoNum, SOItem, OpenDate, Product, Description, PartCost, 
+     Qty, RC_Description, CS_Dscription, AffQty, ComplaintCost, RespDept)
+AS
+(
+SELECT DATENAME(weekday, CD.[OpenDate]) AS DayOfWeek
+      ,CD.[ComplaintNum],CD.[Status],CD.[SoNum]
+      ,CD.[SOItem],CD.[OpenDate] ,CD.[Product]
       ,CD.[Description],CD.[Expr9] As PartCost
       ,CD.[Qty],CD.[RC_Description]
       ,CD.[CS_Description],CD.[AffQty]
-      ,CAST(CD.[AffQty]*CD.[Expr9] AS DECIMAL(10,2)) AS ComplaintCost
-	  ,M.[RespDept] As Dept
+	  ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
+	  ,M.[RespDept]
   FROM [NwdComplaints].[dbo].[vComplaintDetails] AS CD
-  JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
+  LEFT OUTER JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
   ON (CD.[ComplaintNum] = M.[ComplaintNum])
-  WHERE CD.[Status] IN ('Active', 'Closed') AND
-        M.[RespDept] IN ('SHIPWH') AND
-		CD.[OpenDate] >=DATEADD(day, DATEDIFF(day,1,GETDATE()),0) 
-        AND CD.[OpenDate] < DATEADD(day, DATEDIFF(day,0,GETDATE()),0);'''
-df = pd.read_sql(query, cnxn)
+  WHERE CD.[Status] IN ('Active', 'Closed')
+)
+
+	  SELECT ComplaintNum, SoNum, SOItem, Product, RC_Description, ComplaintCost, RespDept
+	  FROM Complaints_CTE
+	  WHERE  OpenDate >=DATEADD(day, DATEDIFF(day,? ,GETDATE()),0) AND OpenDate < DATEADD(day, DATEDIFF(day,0,GETDATE()),0);'''
+parameters = ['dayCount']
+#df1 = pd.read_sql(query1, cnxn1)
+df1 = cursor1.execute(query1, parameters)
+print(df1)
 
 
 ## Using df.loc to avoid the "SettingWithCopyWarning" in Pandas.  Had been using dfPrint=df[[x,y,z... names of columns]]
-dfPrint = df.loc[:, ['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'AffQty', 'ComplaintCost']]
+dfPrint = df1.loc[:, ['ComplaintNum', 'SoNum', 'SOItem', 'Product', 'RC_Description', 'ComplaintCost', 'RespDept']]
 dfPrint.sort_values(by=['Dept'], inplace=True)
 
 ####################################################################################################

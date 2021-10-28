@@ -1,55 +1,93 @@
 
 
 """ Downloads data from Complaints Excel file and Sales Excel file
-    Creates Monthly reports with tables and graphs before emailing """
+    Creates Monthly reports and emails """
 
 import win32com.client as win32
-import sys, os
 import pandas as  pd
 import datetime
+import calendar
 from datetime import date
 from datetime import timedelta
+# from datetime import datetime
 from pathlib import Path
 from tabulate import tabulate
 from IPython.display import HTML
-
-
-
-#######################################################################################################################
 import pyodbc
-import pandas as pd
 
-cnxn = pyodbc.connect('''Driver={ODBC Driver 17 for SQL Server}; Server=SQL2014; Database=NWDComplaints; Trusted_Connection=yes;''')
-cursor = cnxn.cursor()
 
-query = '''SELECT CD.[ComplaintNum],CD.[Status],CD.[SoNum]
-      ,CD.[SOItem],CD.[OpenDate],CD.[Product]
+
+
+## This establishes the connection to SQL Server as I need realtime data to create the report rather than reading an Excel spreadsheet
+cnxn1 = pyodbc.connect('''Driver={ODBC Driver 17 for SQL Server}; Server=SQL2014; Database=NWDComplaints; Trusted_Connection=yes;''')
+cursor1 = cnxn1.cursor()
+
+query1 = '''
+WITH Complaints_CTE (DayOfWeek, ComplaintNum, Status, SoNum, SOItem, OpenDate, Product, Description, PartCost, 
+     Qty,  RC_Description, MfCustName, CS_Dscription, AffQty, ComplaintCost, RespDept)
+AS
+(
+SELECT DATENAME(weekday, CD.[OpenDate]) AS DayOfWeek
+      ,CD.[ComplaintNum],CD.[Status],CD.[SoNum]
+      ,CD.[SOItem],CD.[OpenDate] ,CD.[Product]
       ,CD.[Description],CD.[Expr9] As PartCost
-      ,CD.[Qty],CD.[RC_Description]
+      ,CD.[Qty],CD.[RC_Description], CD.[MfCustName]
       ,CD.[CS_Description],CD.[AffQty]
-      ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
-	  ,M.[RespDept] As Dept
+	  ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
+	  ,M.[RespDept]
   FROM [NwdComplaints].[dbo].[vComplaintDetails] AS CD
-  JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
+  LEFT OUTER JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
   ON (CD.[ComplaintNum] = M.[ComplaintNum])
-  WHERE CD.[Status] IN ('Active', 'Closed') AND
-        M.[RespDept] IN ('SHIPWH') AND
-		CD.[OpenDate] >=DATEADD(day, DATEDIFF(day,1,GETDATE()),0) 
-        AND CD.[OpenDate] < DATEADD(day, DATEDIFF(day,0,GETDATE()),0);'''
-df = pd.read_sql(query, cnxn)
+  WHERE CD.[Status] IN ('Active', 'Closed') AND M.[RespDept] IN ('SHIPWH')
+)
 
-cols = ['Product', 'SoNum','RC_Description', 'CS_Description']
-df['Product'].str.strip()
-df['SoNum'] = df['SoNum'].apply(int)
-newMssgString = df[cols].to_markdown()
-newMssgString2 = df[cols].to_html
-tbl_Out = HTML(df.to_html(classes='table table-striped'))
+	  SELECT ComplaintNum, SoNum, SOItem, OpenDate, Product, RC_Description, ComplaintCost, RespDept, MfCustName
+	  FROM Complaints_CTE
+	  WHERE  OpenDate >=DATEADD(day, DATEDIFF(day,1 ,CAST(GETDATE() AS date)),0) AND OpenDate < DATEADD(day, DATEDIFF(day,0,CAST(GETDATE() AS date)),0);'''
+
+query3 = '''
+WITH Complaints_CTE (DayOfWeek, ComplaintNum, Status, SoNum, SOItem, OpenDate, Product, Description, PartCost, 
+     Qty, RC_Description, MfCustName, CS_Dscription, AffQty, ComplaintCost, RespDept)
+AS
+(
+SELECT DATENAME(weekday, CD.[OpenDate]) AS DayOfWeek
+      ,CD.[ComplaintNum],CD.[Status],CD.[SoNum]
+      ,CD.[SOItem],CD.[OpenDate] ,CD.[Product]
+      ,CD.[Description],CD.[Expr9] As PartCost
+      ,CD.[Qty],CD.[RC_Description], CD.[MfCustName]
+      ,CD.[CS_Description],CD.[AffQty]
+	  ,CD.[AffQty]*CD.[Expr9] AS ComplaintCost
+	  ,M.[RespDept]
+  FROM [NwdComplaints].[dbo].[vComplaintDetails] AS CD
+  LEFT OUTER JOIN [NwdComplaints].[dbo].[ComplaintMast] AS M
+  ON (CD.[ComplaintNum] = M.[ComplaintNum])
+  WHERE CD.[Status] IN ('Active', 'Closed') AND M.[RespDept] IN ('SHIPWH')
+)
+
+	  SELECT ComplaintNum, SoNum, SOItem, OpenDate, Product, RC_Description, ComplaintCost, RespDept, MfCustName
+	  FROM Complaints_CTE
+	  WHERE  OpenDate >=DATEADD(day, DATEDIFF(day,3 ,CAST(GETDATE() AS date)),0) AND OpenDate < DATEADD(day, DATEDIFF(day,0,CAST(GETDATE() AS date)),0);'''
+
+# This determines the day of the week for SQL offset reasons
+curr_date = date.today()
+dayOfWeek = (calendar.day_name[curr_date.weekday()])
+
+if dayOfWeek in ['Tuesday', 'Wednesday', 'Thursday', 'Friday']:
+  query = query1
+else:
+  query = query3
+
+df1 = pd.read_sql(query, cnxn1)
+print(df1.to_string() + "\n")
+cursor1.close()
+cnxn1.close()
 
 #######################################################################################################################
 
 
-dfPrint = df.loc[:, ['Dept', 'ComplaintNum', 'SoNum', 'SOItem', 'Product', 'PartCost', 'RC_Description', 'AffQty', 'ComplaintCost']]
-dfPrint.sort_values(by=['Dept'], inplace=True)
+dfPrint = df1.loc[:, ['RespDept','ComplaintNum', 'SoNum', 'SOItem', 'Product', 'MfCustName', 'ComplaintCost', 'RC_Description']]
+print(dfPrint)
+
 
 ####################################################################################################
 ####################################################################################################
